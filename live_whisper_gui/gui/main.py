@@ -1,3 +1,5 @@
+import os
+
 import sounddevice
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -6,7 +8,11 @@ from live_whisper_gui.gui.mixins import (
     BlackDesignedWindow
 )
 from live_whisper_gui.gui.widgets import AnimatedTextEdit
-from live_whisper_gui.live_whisper.main import main
+from live_whisper_gui.gui.threads import (
+    InitializationThread,
+    LiveWhisperThread
+)
+from live_whisper_gui.settings import WORK_DIR, ROOT_DIR
 
 
 class MainWindow(
@@ -28,17 +34,17 @@ class MainWindow(
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-        self.initWindow = InitializeWindow()
-        self.initWindow.exec()
+        self.audioDeviceSelectorWindow = AudioDeviceSelector()
+        self.audioDeviceSelectorWindow.exec()
 
         self.toolBarWindow = ToolbarWindow()
 
-        QtCore.QTimer.singleShot(1000, self.afterStartup)
+        QtCore.QTimer.singleShot(100, self.afterStartup)
 
     def afterStartup(self):
         self.whisperThread = LiveWhisperThread(
             self,
-            inputDevice=self.initWindow.chosenDevice
+            inputDevice=self.audioDeviceSelectorWindow.chosenDevice
         )
         self.whisperThread.messageReceivedSignal.connect(
             self.whisperMessageReceived
@@ -84,7 +90,7 @@ class ToolbarWindow(BlackDesignedWindow):
         self.installEventFilter(self)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
         self.closeButton = QtWidgets.QPushButton("x")
-        self.closeButton.clicked.connect(QtCore.QCoreApplication.exit)
+        self.closeButton.clicked.connect(QtWidgets.QApplication.quit)
         self.closeButton.setFixedWidth(20)
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(5, 5, 5, 5)
@@ -112,9 +118,72 @@ class InitializeWindow(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chosenDevice = None
+        self.setFixedWidth(300)
+
+        self.gifLabel = QtWidgets.QLabel(self)
+        self.gifLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.gif = QtGui.QMovie(
+            str(ROOT_DIR / 'gui' / 'images' / 'spinner.gif')
+        )
+        self.gifLabel.setMovie(self.gif)
+        self.gif.setScaledSize(QtCore.QSize(100, 100))
+        self.gif.start()
+
+        self.stageLabel = QtWidgets.QLabel("Initializing...")
+        self.stageLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.progressLabel = QtWidgets.QLabel()
+        self.progressLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.closeButton = QtWidgets.QPushButton("Close")
+        self.closeButton.hide()
+        self.closeButton.clicked.connect(QtWidgets.QApplication.quit)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.gifLabel)
+        layout.addWidget(self.stageLabel)
+        layout.addWidget(self.progressLabel)
+        layout.addWidget(self.closeButton)
+        self.setLayout(layout)
+        QtCore.QTimer.singleShot(10, self.afterWindowShows)
+
+    def afterWindowShows(self):
+        os.makedirs(WORK_DIR, exist_ok=True)
+        self.initializeThread = InitializationThread(self, modelName="small.en")
+        self.initializeThread.messageReceivedSignal.connect(
+            self.threadMessageReceived
+        )
+        self.initializeThread.errorHappenedSignal.connect(
+            self.errorHappened
+        )
+        self.initializeThread.finished.connect(self.initializationFinished)
+        self.initializeThread.start()
+
+    def threadMessageReceived(self, stage: str, progress: int, total: int):
+        self.stageLabel.setText(stage)
+        self.progressLabel.setText(f"{progress*100//total}%")
+
+    def initializationFinished(self):
+        del self.initializeThread
+        self.close()
+        self.mainWindow = MainWindow()
+        self.mainWindow.show()
+
+    def errorHappened(self, error: Exception):
+        raise error
+        self.stageLabel.setText(str(error))
+        self.progressLabel.setText("-%")
+        self.closeButton.show()
+
+
+
+class AudioDeviceSelector(
+    QtWidgets.QDialog,
+    MovableFramelessWindow,
+    BlackDesignedWindow
+):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.chosenDevice = None
         self.setBaseSize(320, 320)
-        self.button = QtWidgets.QPushButton("Press")
-        self.button.clicked.connect(self.close)
 
         availableDevises = sounddevice.query_devices()
         self.listWidget = QtWidgets.QListWidget()
@@ -148,17 +217,4 @@ class InitializeWindow(
         self.close()
 
 
-class LiveWhisperThread(QtCore.QThread):
-    _inputDevice = None
-    messageReceivedSignal = QtCore.pyqtSignal(object)
-
-    def __init__(self,  *args, inputDevice: str, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._inputDevice = inputDevice
-
-    def run(self):
-        main(qt_thread=self, input_device=self._inputDevice)
-
-    def sendMessage(self, text: str):
-        self.messageReceivedSignal.emit(text)
 
