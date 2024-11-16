@@ -7,7 +7,8 @@ from whisper import _MODELS
 from pydantic import BaseModel
 
 
-WhisperModel: Type = Literal[tuple(_MODELS.keys())]
+whisper_models = tuple(_MODELS.keys())
+WhisperModel: Type = Literal[whisper_models]
 
 
 class Settings(BaseModel):
@@ -18,29 +19,36 @@ class Settings(BaseModel):
         "whisper"
     )
     USER_SETTINGS_PATH: Path = WORK_DIR / "settings.json"
+    DEFAULT_WHISPER_MODEL: str = "small.en"
 
 
 class UserSettings(BaseModel):
-    whisper_model: WhisperModel = "base.en"
+    whisper_model: WhisperModel | None = None
     window_size: tuple = 300, 300
     mic_sensitivity: float = 0.01
+    skip_input_selector: bool = False
+
+    @classmethod
+    def load(cls, user_settings_path: Path):
+        user_settings_json = {}
+        if user_settings_path.exists():
+            try:
+                with open(user_settings_path) as file:
+                    user_settings_json = json.load(file)
+            except json.decoder.JSONDecodeError:
+                os.unlink(user_settings_path)
+        return cls(**user_settings_json)
+
+    def save(self):
+        if not settings.USER_SETTINGS_PATH.exists():
+            with open(settings.USER_SETTINGS_PATH, 'w') as file:
+                json.dump(self.dict(), file)
 
 
 settings = Settings()
 os.makedirs(settings.WORK_DIR, exist_ok=True)
-_user_settings_json = {}
+user_settings = UserSettings.load(settings.USER_SETTINGS_PATH)
 
-if settings.USER_SETTINGS_PATH.exists():
-    try:
-        with open(settings.USER_SETTINGS_PATH) as file:
-            _user_settings_json = json.load(file)
-    except json.decoder.JSONDecodeError:
-        os.unlink(settings.USER_SETTINGS_PATH)
 
-user_settings = UserSettings(**_user_settings_json)
-
-if not settings.USER_SETTINGS_PATH.exists():
-    with open(settings.USER_SETTINGS_PATH, 'w') as file:
-        json.dump(user_settings.dict(), file)
 
 

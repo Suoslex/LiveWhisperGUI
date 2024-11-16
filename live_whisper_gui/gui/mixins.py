@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 class MovableFramelessWindow(QtWidgets.QWidget):
@@ -12,6 +12,14 @@ class MovableFramelessWindow(QtWidgets.QWidget):
             grip = QtWidgets.QSizeGrip(self)
             grip.resize(self.gripSize, self.gripSize)
             self.grips.append(grip)
+
+        QtCore.QTimer.singleShot(0, self.center)
+
+    def center(self):
+        qtRectangle = self.frameGeometry()
+        centerPoint = QtWidgets.QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
 
     def resizeEvent(self, event, *args, **kwargs):
         super().resizeEvent(event, *args, **kwargs)
