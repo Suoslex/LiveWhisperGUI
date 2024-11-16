@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from whisper import _MODELS
 
-from live_whisper_gui.settings import WORK_DIR
+from live_whisper_gui.settings import settings
 
 
 if TYPE_CHECKING:
@@ -17,10 +17,9 @@ def model_download(qt_thread: "InitializeWindow", name: str) -> str:
     if name not in _MODELS:
         raise EnvironmentError(f"There is no Whisper model called {name}")
     url = _MODELS[name]
-    os.makedirs(WORK_DIR, exist_ok=True)
 
     expected_sha256 = url.split("/")[-2]
-    download_target = os.path.join(WORK_DIR, os.path.basename(url))
+    download_target = os.path.join(settings.WORK_DIR, os.path.basename(url))
 
     if os.path.exists(download_target) and not os.path.isfile(download_target):
         raise RuntimeError(

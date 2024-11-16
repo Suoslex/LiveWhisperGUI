@@ -12,7 +12,7 @@ from live_whisper_gui.gui.threads import (
     InitializationThread,
     LiveWhisperThread
 )
-from live_whisper_gui.settings import WORK_DIR, ROOT_DIR
+from live_whisper_gui.settings import settings
 
 
 class MainWindow(
@@ -125,7 +125,7 @@ class InitializeWindow(
         self.gifLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.gifLabel.setMargin(25)
         self.gif = QtGui.QMovie(
-            str(ROOT_DIR / 'gui' / 'images' / 'spinner.gif')
+            str(settings.ROOT_DIR / 'gui' / 'images' / 'spinner.gif')
         )
         self.gifLabel.setMovie(self.gif)
         self.gif.setScaledSize(QtCore.QSize(80, 80))
@@ -149,8 +149,7 @@ class InitializeWindow(
         QtCore.QTimer.singleShot(10, self.afterWindowShows)
 
     def afterWindowShows(self):
-        os.makedirs(WORK_DIR, exist_ok=True)
-        self.initializeThread = InitializationThread(self, modelName="small")
+        self.initializeThread = InitializationThread(self, modelName="small.en")
         self.initializeThread.messageReceivedSignal.connect(
             self.threadMessageReceived
         )
