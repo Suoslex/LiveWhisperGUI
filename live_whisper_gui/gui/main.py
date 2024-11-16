@@ -118,18 +118,21 @@ class InitializeWindow(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chosenDevice = None
-        self.setFixedWidth(300)
+        self.setFixedSize(270, 270)
+        self.setContentsMargins(10, 10, 10, 10)
 
         self.gifLabel = QtWidgets.QLabel(self)
         self.gifLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.gifLabel.setMargin(25)
         self.gif = QtGui.QMovie(
             str(ROOT_DIR / 'gui' / 'images' / 'spinner.gif')
         )
         self.gifLabel.setMovie(self.gif)
-        self.gif.setScaledSize(QtCore.QSize(100, 100))
+        self.gif.setScaledSize(QtCore.QSize(80, 80))
         self.gif.start()
 
         self.stageLabel = QtWidgets.QLabel("Initializing...")
+        self.stageLabel.setWordWrap(True)
         self.stageLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.progressLabel = QtWidgets.QLabel()
         self.progressLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -147,7 +150,7 @@ class InitializeWindow(
 
     def afterWindowShows(self):
         os.makedirs(WORK_DIR, exist_ok=True)
-        self.initializeThread = InitializationThread(self, modelName="small.en")
+        self.initializeThread = InitializationThread(self, modelName="small")
         self.initializeThread.messageReceivedSignal.connect(
             self.threadMessageReceived
         )
