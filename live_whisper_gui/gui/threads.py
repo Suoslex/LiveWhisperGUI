@@ -4,7 +4,7 @@ from typing import Callable, Any
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from live_whisper_gui.live_whisper.main import StreamHandler
+from live_whisper_gui.live_whisper.main import LiveWhisper
 from live_whisper_gui.live_whisper.model_download import model_download
 
 
@@ -20,7 +20,7 @@ class InitializationThread(QtCore.QThread):
         try:
             model_path = model_download(qt_thread=self, name=self._modelName)
             self.sendMessage('Loading the model...', 15, 100)
-            StreamHandler.init(model_path=model_path)
+            LiveWhisper.init(model_path=model_path)
             self.sendMessage('Loading the model...', 90, 100)
         except Exception as error:
             self.errorHappenedSignal.emit(error)
@@ -39,7 +39,7 @@ class LiveWhisperThread(QtCore.QThread):
 
     def run(self):
         try:
-            StreamHandler.listen(
+            LiveWhisper.listen(
                 qt_thread=self,
                 input_device=self._inputDevice
             )

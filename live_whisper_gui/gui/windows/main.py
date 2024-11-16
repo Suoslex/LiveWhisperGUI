@@ -1,3 +1,5 @@
+import re
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from live_whisper_gui.gui.windows.init import (
@@ -95,7 +97,27 @@ class MainWindow(
         QtCore.QTimer.singleShot(100, self.toolBarWindow.hideIfNotHovered)
 
     def whisperMessageReceived(self, message: str):
-        self.textEdit.append(message)
+        if len(message) == 1:
+            self.textEdit.moveCursor(QtGui.QTextCursor.MoveOperation.End)
+            self.textEdit.insertPlainText('.')
+        else:
+            cursor = self.textEdit.textCursor()
+            while True:
+                cursor.movePosition(
+                    QtGui.QTextCursor.MoveOperation.PreviousCharacter,
+                    QtGui.QTextCursor.MoveMode.KeepAnchor,
+                    1
+                )
+                last_characters = cursor.selectedText()
+                if (
+                    re.findall(r'^\.', last_characters)
+                    and cursor.position() != 0
+                ):
+                    continue
+                break
+            cursor.insertText(f"\n{message}\n")
+
+
 
     def whisperThreadFinished(self):
         del self.whisperThread
