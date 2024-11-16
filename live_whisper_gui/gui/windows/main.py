@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from live_whisper_gui.gui.windows.init import (
     InitializeWindow,
-    ChooseModelWindow,
+    WhisperModelSelectorWindow,
     AudioDeviceSelector
 )
 from live_whisper_gui.gui.mixins import (
@@ -43,7 +43,7 @@ class MainWindow(
         QtCore.QTimer.singleShot(0, self.afterStartup)
 
     def beforeStartup(self):
-        self.chooseWhisperModelWindow = ChooseModelWindow(self)
+        self.chooseWhisperModelWindow = WhisperModelSelectorWindow(self)
         if not user_settings.whisper_model:
             self.chooseWhisperModelWindow.exec()
             user_settings.whisper_model = (
@@ -58,7 +58,7 @@ class MainWindow(
         self.initializeWindow.exec()
 
         self.audioDeviceSelectorWindow = AudioDeviceSelector(self)
-        if not user_settings.skip_input_selector:
+        if user_settings.show_input_selector_on_startup:
             self.audioDeviceSelectorWindow.exec()
 
     def afterStartup(self):

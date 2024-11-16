@@ -6,7 +6,7 @@ from live_whisper_gui.gui.mixins import (
     BlackDesignedWindow
 )
 from live_whisper_gui.gui.threads import InitializationThread
-from live_whisper_gui.settings import settings, whisper_models
+from live_whisper_gui.settings import settings, whisper_models, user_settings
 
 
 class InitializeWindow(
@@ -99,7 +99,7 @@ class SettingsWindow(
         self.close()
 
 
-class ChooseModelWindow(SettingsWindow):
+class WhisperModelSelectorWindow(SettingsWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setContentsMargins(8, 8, 8, 8)
@@ -112,7 +112,7 @@ class ChooseModelWindow(SettingsWindow):
         self.smallLabel.setStyleSheet("font-size: 9pt;")
 
         self.listWidget = QtWidgets.QListWidget()
-        self.listWidget.setStyleSheet("padding: 10px 0px")
+        self.listWidget.setStyleSheet("padding: 10px 0px;")
         self.listWidget.addItems(whisper_models)
         self.listWidget.setCurrentRow(whisper_models.index('small.en'))
 
@@ -140,24 +140,36 @@ class AudioDeviceSelector(SettingsWindow):
         self.label = QtWidgets.QLabel("Please choose an input device:")
         self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        availableDevises = sounddevice.query_devices()
+        availableDevises = [
+            device['name'] for device in sounddevice.query_devices()
+            if device['max_input_channels'] > 0
+        ]
         self.listWidget = QtWidgets.QListWidget()
-        self.listWidget.setStyleSheet("padding: 10px 0px")
-        self.listWidget.addItems(
-            [
-                device['name'] for device in availableDevises
-                if device['max_input_channels'] > 0
-            ]
-        )
-
-        self.chooseButton.setDisabled(True)
+        self.listWidget.setStyleSheet("padding-top: 10px; font-size: 11pt")
+        self.listWidget.addItems(availableDevises)
         self.listWidget.itemClicked.connect(
             lambda: self.chooseButton.setEnabled(True)
         )
+        self.chooseButton.setDisabled(True)
+        if user_settings.default_input_device:
+            try:
+                row_index = availableDevises.index(
+                    user_settings.default_input_device
+                )
+            except ValueError:
+                pass
+            else:
+                self.listWidget.setCurrentRow(row_index)
+                self.chooseButton.setDisabled(False)
+
+        self.checkbox = QtWidgets.QCheckBox("Show this window on every start")
+        self.checkbox.setChecked(True)
+        self.checkbox.setStyleSheet('text-align:center')
 
         layout = self.layout()
         layout.addWidget(self.label)
         layout.addWidget(self.listWidget)
+        layout.addWidget(self.checkbox, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.chooseButton)
 
 
@@ -166,4 +178,16 @@ class AudioDeviceSelector(SettingsWindow):
         if not selectedItem:
             return
         self.chosenDevice = selectedItem.text()
+        show_input_selector_on_startup = self.checkbox.checkState() == 2
+        if (
+            show_input_selector_on_startup
+            != user_settings.show_input_selector_on_startup
+        ):
+            user_settings.show_input_selector_on_startup = (
+                show_input_selector_on_startup
+            )
+            user_settings.save()
+        if self.chosenDevice != user_settings.default_input_device:
+            user_settings.default_input_device = self.chosenDevice
+            user_settings.save()
         self.close()

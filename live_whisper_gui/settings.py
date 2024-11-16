@@ -26,7 +26,8 @@ class UserSettings(BaseModel):
     whisper_model: WhisperModel | None = None
     window_size: tuple = 300, 300
     mic_sensitivity: float = 0.01
-    skip_input_selector: bool = False
+    show_input_selector_on_startup: bool = True
+    default_input_device: str | None = None
 
     @classmethod
     def load(cls, user_settings_path: Path):
@@ -40,9 +41,8 @@ class UserSettings(BaseModel):
         return cls(**user_settings_json)
 
     def save(self):
-        if not settings.USER_SETTINGS_PATH.exists():
-            with open(settings.USER_SETTINGS_PATH, 'w') as file:
-                json.dump(self.dict(), file)
+        with open(settings.USER_SETTINGS_PATH, 'w') as file:
+            json.dump(self.dict(), file)
 
 
 settings = Settings()
