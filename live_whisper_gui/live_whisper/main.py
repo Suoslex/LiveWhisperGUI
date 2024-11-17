@@ -65,7 +65,7 @@ class LiveWhisper:
         #print(indata.max())
         #print(freq)
         if (
-            indata.max() > user_settings.mic_sensitivity
+            indata.max() > user_settings.input_device_sensitivity
             and Vocals[0] <= freq <= Vocals[1]
             and not cls.asst.talking
         ):

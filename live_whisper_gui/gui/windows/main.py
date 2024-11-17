@@ -13,10 +13,7 @@ from live_whisper_gui.gui.mixins import (
     BlackDesignedWindow
 )
 from live_whisper_gui.gui.widgets import AnimatedTextEdit
-from live_whisper_gui.gui.threads import (
-    InitializationThread,
-    LiveWhisperThread
-)
+from live_whisper_gui.gui.threads import LiveWhisperThread
 from live_whisper_gui.settings import settings, whisper_models, user_settings
 
 
@@ -138,6 +135,7 @@ class ToolbarWindow(BlackDesignedWindow):
         self.setAttribute(QtCore.Qt.WA_Hover)
         self.installEventFilter(self)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
+        self.settingsWindow = SettingsWindow()
 
         mainCss = self.mainCss + "QPushButton {border: 0; font-size: 16pt}"
         self.setStyleSheet(mainCss)
@@ -147,6 +145,7 @@ class ToolbarWindow(BlackDesignedWindow):
         self.closeButton.setFixedWidth(20)
         self.settingsButton = QtWidgets.QPushButton("⚙")
         self.settingsButton.setFixedWidth(20)
+        self.settingsButton.clicked.connect(self.settingsWindow.show)
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(5, 5, 5, 7)
         layout.setSpacing(5)
@@ -167,5 +166,26 @@ class ToolbarWindow(BlackDesignedWindow):
             self.hide()
 
 
+class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
 
+        self.whisperModelList = QtWidgets.QComboBox()
+        self.whisperModelList.addItems(whisper_models)
+        self.inputDeviceSensitivitySlider = QtWidgets.QSlider()
+        self.showInputSelectorCheckbox = QtWidgets.QCheckBox(
+            "Show input selector on start"
+        )
+        self.defaultInputDevice = QtWidgets.QComboBox()
+        self.defaultInputDevice.addItems(AudioDeviceSelector.availableDevises)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QtWidgets.QLabel("Settings"))
+        layout.addWidget(self.whisperModelList)
+        layout.addWidget(self.inputDeviceSensitivitySlider)
+        layout.addWidget(self.showInputSelectorCheckbox)
+        layout.addWidget(self.defaultInputDevice)
+        self.setLayout(layout)
 

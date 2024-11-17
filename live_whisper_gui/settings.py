@@ -25,7 +25,7 @@ class Settings(BaseModel):
 class UserSettings(BaseModel):
     whisper_model: WhisperModel | None = None
     window_size: tuple = 300, 300
-    mic_sensitivity: float = 0.01
+    input_device_sensitivity: float = 0.01
     show_input_selector_on_startup: bool = True
     default_input_device: str | None = None
 

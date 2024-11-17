@@ -133,6 +133,10 @@ class WhisperModelSelectorWindow(SettingsWindow):
 
 class AudioDeviceSelector(SettingsWindow):
     chosenDevice: str = None
+    availableDevises = [
+        device['name'] for device in sounddevice.query_devices()
+        if device['max_input_channels'] > 0
+    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -140,20 +144,16 @@ class AudioDeviceSelector(SettingsWindow):
         self.label = QtWidgets.QLabel("Please choose an input device:")
         self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        availableDevises = [
-            device['name'] for device in sounddevice.query_devices()
-            if device['max_input_channels'] > 0
-        ]
         self.listWidget = QtWidgets.QListWidget()
         self.listWidget.setStyleSheet("padding-top: 10px; font-size: 11pt")
-        self.listWidget.addItems(availableDevises)
+        self.listWidget.addItems(self.availableDevises)
         self.listWidget.itemClicked.connect(
             lambda: self.chooseButton.setEnabled(True)
         )
         self.chooseButton.setDisabled(True)
         if user_settings.default_input_device:
             try:
-                row_index = availableDevises.index(
+                row_index = self.availableDevises.index(
                     user_settings.default_input_device
                 )
             except ValueError:
