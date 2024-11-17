@@ -109,13 +109,16 @@ class MainWindow(
                     1
                 )
                 last_characters = cursor.selectedText()
-                if (
-                    re.findall(r'^\.', last_characters)
-                    and cursor.position() != 0
-                ):
-                    continue
-                break
-            cursor.insertText(f"\n{message}\n")
+                if cursor.position() == 0:
+                    break
+                if not re.findall(r'^\.', last_characters):
+                    cursor.movePosition(
+                        QtGui.QTextCursor.MoveOperation.NextCharacter,
+                        QtGui.QTextCursor.MoveMode.KeepAnchor,
+                        1
+                    )
+                    break
+            cursor.insertText(f"{message}\n")
 
 
 
