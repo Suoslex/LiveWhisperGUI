@@ -138,12 +138,20 @@ class ToolbarWindow(BlackDesignedWindow):
         self.setAttribute(QtCore.Qt.WA_Hover)
         self.installEventFilter(self)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
-        self.closeButton = QtWidgets.QPushButton("x")
+
+        mainCss = self.mainCss + "QPushButton {border: 0; font-size: 16pt}"
+        self.setStyleSheet(mainCss)
+
+        self.closeButton = QtWidgets.QPushButton("✕")
         self.closeButton.clicked.connect(QtWidgets.QApplication.quit)
         self.closeButton.setFixedWidth(20)
+        self.settingsButton = QtWidgets.QPushButton("⚙")
+        self.settingsButton.setFixedWidth(20)
         layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(5, 5, 5, 7)
+        layout.setSpacing(5)
         layout.addWidget(self.closeButton)
+        layout.addWidget(self.settingsButton)
         self.setLayout(layout)
 
     def eventFilter(self, obj, event):

@@ -55,13 +55,13 @@ class MovableFramelessWindow(FramelessWindow):
 
 
 class BlackDesignedWindow(QtWidgets.QWidget):
+    mainCss: str = """
+        QWidget {background-color: black; color: white; text-align: center;}
+        QPushButton {border: 1px solid white;}
+        QPushButton::disabled {border: 1px solid grey;}
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWindowOpacity(0.9)
-        self.setStyleSheet(
-            """
-            QWidget {background-color: black; color: white; text-align: center;}
-            QPushButton {border: 1px solid white;}
-            QPushButton::disabled {border: 1px solid grey;}
-            """
-        )
+        self.setStyleSheet(self.mainCss)
