@@ -8,6 +8,7 @@ from live_whisper_gui.gui.windows.init import (
     AudioDeviceSelector
 )
 from live_whisper_gui.gui.mixins import (
+    FramelessWindow,
     MovableFramelessWindow,
     BlackDesignedWindow
 )
@@ -34,7 +35,7 @@ class MainWindow(
         self.textEdit.setPlaceholderText("Listening...")
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.textEdit)
-        widget = QtWidgets.QWidget()
+        widget = FramelessWindow()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
@@ -75,26 +76,31 @@ class MainWindow(
         self.whisperThread.start()
 
     def eventFilter(self, obj, event):
+        if obj == self and event.type() == QtCore.QEvent.Move:
+            self.moveToolbarWindow()
         if event.type() == QtCore.QEvent.HoverEnter:
             if not self._draggingMousePos:
                 self.showToolbarWindow()
         if event.type() == QtCore.QEvent.HoverLeave:
             self.hideToolbarWindow()
-        if obj == self and event.type() == QtCore.QEvent.Move:
-            if self._draggingMousePos:
-                self.toolBarWindow.hide()
-        if obj == self and event.type() == QtCore.QEvent.MouseButtonRelease:
-            if self._draggingMousePos:
-                self.showToolbarWindow()
         return super().eventFilter(obj, event)
 
+    def resizeEvent(self, event, *args, **kwargs):
+        super().resizeEvent(event, *args, **kwargs)
+        self.moveToolbarWindow()
+
     def showToolbarWindow(self):
-        newPos = self.geometry().topRight()
-        self.toolBarWindow.move(newPos.x(), newPos.y())
+        self.moveToolbarWindow()
+        self.toolBarWindow.stopClosing = True
         self.toolBarWindow.show()
 
+    def moveToolbarWindow(self):
+        newPos = self.geometry().topRight()
+        self.toolBarWindow.move(newPos.x(), newPos.y())
+
     def hideToolbarWindow(self):
-        QtCore.QTimer.singleShot(100, self.toolBarWindow.hideIfNotHovered)
+        self.toolBarWindow.stopClosing = False
+        QtCore.QTimer.singleShot(400, self.toolBarWindow.hideIfNotHovered)
 
     def whisperMessageReceived(self, message: str):
         if len(message) == 1:
@@ -120,14 +126,12 @@ class MainWindow(
                     break
             cursor.insertText(f"{message}\n")
 
-
-
     def whisperThreadFinished(self):
         del self.whisperThread
 
 
 class ToolbarWindow(BlackDesignedWindow):
-    _mouseInside: bool = False
+    stopClosing: bool = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -144,14 +148,14 @@ class ToolbarWindow(BlackDesignedWindow):
 
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.HoverEnter:
-            self._mouseInside = True
+            self.stopClosing = True
         if event.type() == QtCore.QEvent.Leave:
-            self._mouseInside = False
+            self.stopClosing = False
             self.hide()
         return super().eventFilter(obj, event)
 
     def hideIfNotHovered(self):
-        if not self._mouseInside:
+        if not self.stopClosing:
             self.hide()
 
 
