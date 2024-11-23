@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets, QtCore
 class AnimatedTextEdit(QtWidgets.QTextEdit):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.setContentsMargins(0, 30, 0, 0)
         self.setStyleSheet("QScrollBar:vertical { width: 5px;}")
@@ -30,3 +31,12 @@ class AnimatedTextEdit(QtWidgets.QTextEdit):
     @QtCore.pyqtSlot(QtCore.QVariant)
     def moveToLine(self, i):
         self.verticalScrollBar().setValue(i)
+
+    def event(self, e):
+        if e.type() == QtCore.QEvent.MouseButtonDblClick:
+            self.setDisabled(False)
+        return super().event(e)
+
+    def leaveEvent(self, a0):
+        self.setDisabled(True)
+

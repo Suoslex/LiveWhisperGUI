@@ -31,11 +31,11 @@ class MainWindow(
         self.installEventFilter(self)
 
         self.textEdit = AnimatedTextEdit(self)
+        self.textEdit.setDisabled(True)
         self.textEdit.setPlaceholderText("Listening...")
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.textEdit)
         widget = FramelessWindow()
-        widget.setLayout(layout)
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.addWidget(self.textEdit)
         self.setCentralWidget(widget)
 
         self.beforeStartup()
@@ -102,8 +102,10 @@ class MainWindow(
         QtCore.QTimer.singleShot(400, self.toolBarWindow.hideIfNotHovered)
 
     def whisperMessageReceived(self, message: str):
+        if self.textEdit.isEnabled():
+            return
+        self.textEdit.moveCursor(QtGui.QTextCursor.MoveOperation.End)
         if len(message) == 1:
-            self.textEdit.moveCursor(QtGui.QTextCursor.MoveOperation.End)
             self.textEdit.insertPlainText('.')
         else:
             cursor = self.textEdit.textCursor()
@@ -214,10 +216,11 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
         ))
 
         self.showInputSelectorCheckbox = QtWidgets.QCheckBox(
-            "Show input selector on start"
+            "Show input device selector on start"
         )
         self.showInputSelectorCheckbox.setStyleSheet(
-            "margin-left:50%; margin-right:50%; margin-top: 4px; margin-bottom: 4px"
+            "margin-left:50%; margin-right:50%; "
+            "margin-top: 4px; margin-bottom: 4px"
         )
 
         self.okButton = QtWidgets.QPushButton("OK")
