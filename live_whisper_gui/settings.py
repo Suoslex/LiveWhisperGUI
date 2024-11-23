@@ -4,7 +4,7 @@ from typing import Literal, Type
 from pathlib import Path
 
 from whisper import _MODELS
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 
 whisper_models = tuple(_MODELS.keys())
@@ -18,8 +18,22 @@ class Settings(BaseModel):
         os.getenv("XDG_CACHE_HOME", _default_work_dir),
         "whisper"
     )
+    RESTART_ERROR_CODE: int = 999
     USER_SETTINGS_PATH: Path = WORK_DIR / "settings.json"
     DEFAULT_WHISPER_MODEL: str = "small.en"
+    MIN_INPUT_DEVICE_SENSITIVITY: float = 0.002
+    MAX_INPUT_DEVICE_SENSITIVITY: float = 0.2
+
+    @computed_field
+    @property
+    def INPUT_DEVICE_SENSITIVITY_STEP(self) -> float:
+        return (
+            (
+                self.MAX_INPUT_DEVICE_SENSITIVITY
+                - self.MIN_INPUT_DEVICE_SENSITIVITY
+            ) / 100
+        )
+
 
 
 class UserSettings(BaseModel):

@@ -137,7 +137,10 @@ class ToolbarWindow(BlackDesignedWindow):
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
         self.settingsWindow = SettingsWindow()
 
-        mainCss = self.mainCss + "QPushButton {border: 0; font-size: 16pt}"
+        mainCss = (
+            self.mainCss
+            + "QPushButton {border: 0; font-size: 16pt;  padding: 0px;}"
+        )
         self.setStyleSheet(mainCss)
 
         self.closeButton = QtWidgets.QPushButton("✕")
@@ -175,16 +178,23 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
 
         self.settingsLabel = QtWidgets.QLabel("Settings")
         self.settingsLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+
         self.whisperModelListLabel = QtWidgets.QLabel("Whisper model")
         self.whisperModelListLabel.setFont(self.inputLabelFont)
         self.whisperModelListLabel.setContentsMargins(0, 6, 0, 1)
         self.whisperModelList = QtWidgets.QComboBox()
         self.whisperModelList.addItems(whisper_models)
+        self.whisperModelList.setCurrentText(user_settings.whisper_model)
+
         self.defaultInputDeviceLabel = QtWidgets.QLabel("Default input device")
         self.defaultInputDeviceLabel.setFont(self.inputLabelFont)
         self.defaultInputDeviceLabel.setContentsMargins(0, 4, 0, 1)
         self.defaultInputDevice = QtWidgets.QComboBox()
         self.defaultInputDevice.addItems(AudioDeviceSelector.availableDevises)
+        self.defaultInputDevice.setCurrentText(
+            user_settings.default_input_device
+        )
+
         self.inputDeviceSensitivitySliderLabel = QtWidgets.QLabel(
             "Input device sensivity"
         )
@@ -193,13 +203,23 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
         self.inputDeviceSensitivitySlider = QtWidgets.QSlider(
             orientation=QtCore.Qt.Orientation.Horizontal
         )
+        self.inputDeviceSensitivitySlider.valueChanged.connect(
+            self.inputDeviceSenditivityChanged
+        )
+        self.inputDeviceSensitivitySlider.setValue(int(
+            user_settings.input_device_sensitivity * 100
+            // settings.MAX_INPUT_DEVICE_SENSITIVITY
+        ))
+
         self.showInputSelectorCheckbox = QtWidgets.QCheckBox(
             "Show input selector on start"
         )
         self.showInputSelectorCheckbox.setStyleSheet(
             "margin-left:50%; margin-right:50%; margin-top: 4px; margin-bottom: 4px"
         )
+
         self.okButton = QtWidgets.QPushButton("OK")
+        self.okButton.clicked.connect(self.okButtonPressed)
 
         layout = QtWidgets.QVBoxLayout()
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -214,3 +234,41 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
         layout.addWidget(self.okButton)
         self.setLayout(layout)
 
+    def inputDeviceSenditivityChanged(self):
+        user_settings.input_device_sensitivity = (
+            self.inputDeviceSensitivitySlider.value()
+            * settings.INPUT_DEVICE_SENSITIVITY_STEP
+        )
+
+    def okButtonPressed(self):
+        new_user_settings = {
+            "whisper_model": self.whisperModelList.currentText(),
+            "default_input_device": self.defaultInputDevice.currentText(),
+            "input_device_sensitivity": (
+                self.inputDeviceSensitivitySlider.value()
+                * settings.INPUT_DEVICE_SENSITIVITY_STEP
+            ),
+            "show_input_selector_on_startup": (
+                self.showInputSelectorCheckbox.checkState() == 2
+            )
+        }
+        old_whisper_model = user_settings.whisper_model
+        for key, value in new_user_settings.items():
+            setattr(user_settings, key, value)
+        user_settings.save()
+        if old_whisper_model != user_settings.whisper_model:
+            self.askAboutRestart()
+        self.close()
+
+    def askAboutRestart(self):
+        dlg = QtWidgets.QMessageBox(self)
+        dlg.setWindowTitle("Restart is required")
+        dlg.setText(
+            "Restart is required in order to apply new changes. Restart now?"
+        )
+        dlg.setStandardButtons(
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        button = dlg.exec()
+        if button == QtWidgets.QMessageBox.StandardButton.Yes:
+            QtCore.QCoreApplication.exit(999)

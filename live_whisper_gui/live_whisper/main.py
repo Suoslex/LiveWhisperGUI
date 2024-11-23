@@ -46,7 +46,11 @@ class LiveWhisper:
         cls.prevblock = cls.buffer = np.zeros((0,1))
         cls.fileready = False
         cls.ready_buffer = BytesIO()
+        cls.running = cls.asst.running = False
+        if hasattr(cls, 'model'):
+            del cls.model
         cls.model = whisper.load_model(model_path)
+        cls.running = cls.asst.running = True
 
     @classmethod
     def listen(cls, qt_thread = None, input_device: str = None):
