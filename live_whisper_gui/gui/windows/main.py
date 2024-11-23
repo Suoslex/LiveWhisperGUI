@@ -2,6 +2,7 @@ import re
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from live_whisper_gui.live_whisper.main import LiveWhisper
 from live_whisper_gui.gui.windows.init import (
     InitializeWindow,
     WhisperModelSelectorWindow,
@@ -25,7 +26,8 @@ class MainWindow(
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
-        self.setBaseSize(320, 450)
+
+        self.resize(*user_settings.window_size)
         self.installEventFilter(self)
 
         self.textEdit = AnimatedTextEdit(self)
@@ -253,10 +255,14 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
             )
         }
         old_whisper_model = user_settings.whisper_model
+        old_default_input_device = user_settings.default_input_device
         for key, value in new_user_settings.items():
             setattr(user_settings, key, value)
         user_settings.save()
-        if old_whisper_model != user_settings.whisper_model:
+        if (
+            old_whisper_model != user_settings.whisper_model
+            or old_default_input_device != user_settings.default_input_device
+        ):
             self.askAboutRestart()
         self.close()
 

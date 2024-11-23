@@ -12,8 +12,8 @@ class FramelessWindow(QtWidgets.QWidget):
             grip.resize(self.gripSize, self.gripSize)
             self.grips.append(grip)
 
-        QtCore.QTimer.singleShot(0, self.center)
-        QtCore.QTimer.singleShot(0, self.moveGrips)
+        QtCore.QTimer.singleShot(10, self.center)
+        QtCore.QTimer.singleShot(10, self.moveGrips)
 
     def center(self):
         qtRectangle = self.frameGeometry()

@@ -10,11 +10,6 @@ from ffmpeg import FFmpeg
 
 from live_whisper_gui.settings import user_settings
 
-if TYPE_CHECKING:
-    from live_whisper_gui.gui.threads import (
-        LiveWhisperThread,
-        InitializationThread
-    )
 
 # This is my attempt to make psuedo-live transcription of speech using Whisper.
 # Since my system can't use pyaudio, I'm using sounddevice instead.
@@ -46,17 +41,30 @@ class LiveWhisper:
         cls.prevblock = cls.buffer = np.zeros((0,1))
         cls.fileready = False
         cls.ready_buffer = BytesIO()
-        cls.running = cls.asst.running = False
+        cls.stop_listen()
         if hasattr(cls, 'model'):
             del cls.model
         cls.model = whisper.load_model(model_path)
         cls.running = cls.asst.running = True
 
     @classmethod
-    def listen(cls, qt_thread = None, input_device: str = None):
+    def listen(
+            cls,
+            qt_thread=None,
+            input_device: str = None
+    ):
         cls._qt_thread = qt_thread
         with sd.InputStream(device=input_device, channels=1, callback=cls._callback, blocksize=int(SampleRate * BlockSize / 1000), samplerate=SampleRate):
             while cls.running and cls.asst.running: cls._process()
+
+    @classmethod
+    def stop_listen(cls):
+        cls.running = cls.asst.running = False
+
+    @classmethod
+    def restart_listening(cls, input_device: str = None):
+        cls.stop_listen()
+        cls.listen(qt_thread=cls._qt_thread, input_device=input_device)
 
     @classmethod
     def _callback(cls, indata, frames, time, status):

@@ -2,7 +2,7 @@ import sys
 
 from PyQt5 import QtWidgets
 
-from live_whisper_gui.settings import settings
+from live_whisper_gui.settings import settings, user_settings
 from live_whisper_gui.gui.windows.main import MainWindow, SettingsWindow
 
 
@@ -15,4 +15,6 @@ if __name__ == "__main__":
         if return_code == settings.RESTART_ERROR_CODE:
             ui.close()
             continue
+        user_settings.window_size = (ui.size().width(), ui.size().height())
+        user_settings.save()
         sys.exit(return_code)
