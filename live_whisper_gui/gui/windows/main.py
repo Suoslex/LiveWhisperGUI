@@ -170,22 +170,47 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
+        self.inputLabelFont = QtGui.QFont()
+        self.inputLabelFont.setPointSize(10)
 
+        self.settingsLabel = QtWidgets.QLabel("Settings")
+        self.settingsLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.whisperModelListLabel = QtWidgets.QLabel("Whisper model")
+        self.whisperModelListLabel.setFont(self.inputLabelFont)
+        self.whisperModelListLabel.setContentsMargins(0, 6, 0, 1)
         self.whisperModelList = QtWidgets.QComboBox()
         self.whisperModelList.addItems(whisper_models)
-        self.inputDeviceSensitivitySlider = QtWidgets.QSlider()
+        self.defaultInputDeviceLabel = QtWidgets.QLabel("Default input device")
+        self.defaultInputDeviceLabel.setFont(self.inputLabelFont)
+        self.defaultInputDeviceLabel.setContentsMargins(0, 4, 0, 1)
+        self.defaultInputDevice = QtWidgets.QComboBox()
+        self.defaultInputDevice.addItems(AudioDeviceSelector.availableDevises)
+        self.inputDeviceSensitivitySliderLabel = QtWidgets.QLabel(
+            "Input device sensivity"
+        )
+        self.inputDeviceSensitivitySliderLabel.setFont(self.inputLabelFont)
+        self.inputDeviceSensitivitySliderLabel.setContentsMargins(0, 4, 0, 1)
+        self.inputDeviceSensitivitySlider = QtWidgets.QSlider(
+            orientation=QtCore.Qt.Orientation.Horizontal
+        )
         self.showInputSelectorCheckbox = QtWidgets.QCheckBox(
             "Show input selector on start"
         )
-        self.defaultInputDevice = QtWidgets.QComboBox()
-        self.defaultInputDevice.addItems(AudioDeviceSelector.availableDevises)
+        self.showInputSelectorCheckbox.setStyleSheet(
+            "margin-left:50%; margin-right:50%; margin-top: 4px; margin-bottom: 4px"
+        )
+        self.okButton = QtWidgets.QPushButton("OK")
 
         layout = QtWidgets.QVBoxLayout()
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QtWidgets.QLabel("Settings"))
+        layout.addWidget(self.settingsLabel)
+        layout.addWidget(self.whisperModelListLabel)
         layout.addWidget(self.whisperModelList)
+        layout.addWidget(self.defaultInputDeviceLabel)
+        layout.addWidget(self.defaultInputDevice)
+        layout.addWidget(self.inputDeviceSensitivitySliderLabel)
         layout.addWidget(self.inputDeviceSensitivitySlider)
         layout.addWidget(self.showInputSelectorCheckbox)
-        layout.addWidget(self.defaultInputDevice)
+        layout.addWidget(self.okButton)
         self.setLayout(layout)
 

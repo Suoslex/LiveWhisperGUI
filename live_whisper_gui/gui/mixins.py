@@ -59,6 +59,39 @@ class BlackDesignedWindow(QtWidgets.QWidget):
         QWidget {background-color: black; color: white; text-align: center;}
         QPushButton {border: 1px solid white;}
         QPushButton::disabled {border: 1px solid grey;}
+        QComboBox {border: 1px solid white; padding: 4px}
+
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 15px;
+    right: 8px;
+}
+
+QComboBox::down-arrow {
+    color: white;
+    content: '-'
+}
+
+QComboBox::down-arrow:on { 
+    top: 1px;
+    left: 1px;
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid white;
+}
+
+QSlider::handle:horizontal {
+    background: white;
+	border-radius: 11px; 
+}
+
+QSlider::handle:horizontal:pressed {
+    background-color: lightgrey;
+}
+
     """
 
     def __init__(self, *args, **kwargs):
