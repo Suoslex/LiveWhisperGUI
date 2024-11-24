@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "live-whisper-gui"
+version = "0.1.0"
+description = "A nearly-live implementation of OpenAI's Whisper by Nikorasu & Suoslex"
+authors = ["Suoslex <mtsarev06@gmail.com>", "Nik Stromberg - <nikorasu85@gmail.com>"]
+license = "MIT 2022"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+llvmlite = "^0.43.0"
+numba = "^0.60.0"
+openai-whisper = {git = "https://github.com/openai/whisper.git"}
+scipy = "^1.14.1"
+sounddevice = "^0.5.1"
+pydantic = "^2.10.1"
+pyqt5 = "^5.15.11"
+python-ffmpeg = "^2.0.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -23,12 +23,12 @@ class Settings(BaseModel):
     DEFAULT_WHISPER_MODEL: str = "small.en"
     SAMPLE_RATE: int = 44100
     BLOCK_SIZE_MSEC: int = 30
-    SILENT_BLOCKS_TO_SAVE: int = 10
+    SILENT_BLOCKS_TO_SAVE: int = 11
     VOCAL_RANGE: tuple = 50, 1000
     MIN_INPUT_DEVICE_SENSITIVITY: float = 0.0001
     MAX_INPUT_DEVICE_SENSITIVITY: float = 0.2
     MIN_TRANSCRIBE_BUFFER_LENGTH: int = 50000
-    MAX_TRANSCRIBE_BUFFER_LENGTH: int = 1000000
+    MAX_TRANSCRIBE_BUFFER_LENGTH: int = 400000
 
     @computed_field
     @property
