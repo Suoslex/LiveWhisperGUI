@@ -22,6 +22,7 @@ class LiveWhisper:
     def init(cls, model_path: str):
         cls.padding = 0
         cls.is_buffer_ready = False
+        cls.buffer = np.zeros((0, 1))
         cls.ready_buffer = BytesIO()
         cls.running = False
         if hasattr(cls, 'model'):
@@ -94,10 +95,10 @@ class LiveWhisper:
 
     @classmethod
     def _save_audio(cls):
-        cls.is_buffer_ready = True
         cls.ready_buffer = BytesIO()
         write(cls.ready_buffer, settings.SAMPLE_RATE, cls.buffer)
         cls.buffer = np.zeros((0, 1))
+        cls.is_buffer_ready = True
 
     @classmethod
     def _load_audio(cls):

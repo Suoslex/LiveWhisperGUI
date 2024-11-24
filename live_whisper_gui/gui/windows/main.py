@@ -230,7 +230,9 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
             "margin-top: 4px; margin-bottom: 4px"
         )
         self.printDotsWhileListeningCheckbox.setCheckState(
-            2 if user_settings.print_dots_while_listening else 1
+            QtCore.Qt.Checked
+            if user_settings.print_dots_while_listening else
+            QtCore.Qt.Unchecked
         )
 
         self.showInputSelectorCheckbox = QtWidgets.QCheckBox(
@@ -241,7 +243,9 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
             "margin-top: 4px; margin-bottom: 4px"
         )
         self.showInputSelectorCheckbox.setCheckState(
-            2 if user_settings.show_input_selector_on_startup else 1
+            QtCore.Qt.Checked
+            if user_settings.show_input_selector_on_startup else
+            QtCore.Qt.Unchecked
         )
 
         self.okButton = QtWidgets.QPushButton("OK")

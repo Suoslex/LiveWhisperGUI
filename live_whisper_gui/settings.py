@@ -1,6 +1,6 @@
 import json.decoder
 import os
-from typing import Literal, Type
+from typing import Literal, Type, Sequence
 from pathlib import Path
 
 from whisper import _MODELS
@@ -24,7 +24,7 @@ class Settings(BaseModel):
     SAMPLE_RATE: int = 44100
     BLOCK_SIZE_MSEC: int = 30
     SILENT_BLOCKS_TO_SAVE: int = 10
-    VOCAL_RANGE = range(50, 1000)
+    VOCAL_RANGE: Sequence = range(50, 1100)
     MIN_INPUT_DEVICE_SENSITIVITY: float = 0.002
     MAX_INPUT_DEVICE_SENSITIVITY: float = 0.2
     MIN_TRANSCRIBE_BUFFER_LENGTH: int = 50000
