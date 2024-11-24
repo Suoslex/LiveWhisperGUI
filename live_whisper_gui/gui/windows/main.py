@@ -13,7 +13,7 @@ from live_whisper_gui.gui.mixins import (
     MovableFramelessWindow,
     BlackDesignedWindow
 )
-from live_whisper_gui.gui.widgets import AnimatedTextEdit
+from live_whisper_gui.gui.widgets import AdvancedTextEdit
 from live_whisper_gui.gui.threads import LiveWhisperThread
 from live_whisper_gui.settings import settings, whisper_models, user_settings
 
@@ -30,7 +30,7 @@ class MainWindow(
         self.resize(*user_settings.window_size)
         self.installEventFilter(self)
 
-        self.textEdit = AnimatedTextEdit(self)
+        self.textEdit = AdvancedTextEdit(self)
         self.textEdit.setDisabled(True)
         self.textEdit.setPlaceholderText("Listening...")
         widget = FramelessWindow()
@@ -105,9 +105,13 @@ class MainWindow(
         if self.textEdit.isEnabled():
             return
         self.textEdit.moveCursor(QtGui.QTextCursor.MoveOperation.End)
+        message = message.strip()
         if len(message) == 1:
-            self.textEdit.insertPlainText('.')
+            if user_settings.print_dots_while_listening:
+                self.textEdit.insertPlainText('.')
         else:
+            if not user_settings.print_dots_while_listening:
+                return self.textEdit.append(message)
             cursor = self.textEdit.textCursor()
             while True:
                 cursor.movePosition(
@@ -125,7 +129,10 @@ class MainWindow(
                         1
                     )
                     break
-            cursor.insertText(f"{message}\n")
+            if message:
+                cursor.insertText(f"{message}\n")
+            else:
+                cursor.removeSelectedText()
 
     def whisperThreadFinished(self):
         del self.whisperThread
@@ -215,12 +222,26 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
             // settings.MAX_INPUT_DEVICE_SENSITIVITY
         ))
 
+        self.printDotsWhileListeningCheckbox = QtWidgets.QCheckBox(
+            "Print dots while listening"
+        )
+        self.printDotsWhileListeningCheckbox.setStyleSheet(
+            "margin-left:50%; margin-right:50%; "
+            "margin-top: 4px; margin-bottom: 4px"
+        )
+        self.printDotsWhileListeningCheckbox.setCheckState(
+            2 if user_settings.print_dots_while_listening else 1
+        )
+
         self.showInputSelectorCheckbox = QtWidgets.QCheckBox(
             "Show input device selector on start"
         )
         self.showInputSelectorCheckbox.setStyleSheet(
             "margin-left:50%; margin-right:50%; "
             "margin-top: 4px; margin-bottom: 4px"
+        )
+        self.showInputSelectorCheckbox.setCheckState(
+            2 if user_settings.show_input_selector_on_startup else 1
         )
 
         self.okButton = QtWidgets.QPushButton("OK")
@@ -235,6 +256,7 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
         layout.addWidget(self.defaultInputDevice)
         layout.addWidget(self.inputDeviceSensitivitySliderLabel)
         layout.addWidget(self.inputDeviceSensitivitySlider)
+        layout.addWidget(self.printDotsWhileListeningCheckbox)
         layout.addWidget(self.showInputSelectorCheckbox)
         layout.addWidget(self.okButton)
         self.setLayout(layout)
@@ -255,6 +277,9 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
             ),
             "show_input_selector_on_startup": (
                 self.showInputSelectorCheckbox.checkState() == 2
+            ),
+            "print_dots_while_listening": (
+                self.printDotsWhileListeningCheckbox.checkState() == 2
             )
         }
         old_whisper_model = user_settings.whisper_model

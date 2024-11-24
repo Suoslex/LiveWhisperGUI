@@ -10,7 +10,7 @@ from live_whisper_gui.settings import settings
 
 
 if TYPE_CHECKING:
-    from live_whisper_gui.gui.main import InitializeWindow
+    from live_whisper_gui.gui.windows.init import InitializeWindow
 
 
 def model_download(qt_thread: "InitializeWindow", name: str) -> str:

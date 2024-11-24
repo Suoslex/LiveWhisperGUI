@@ -1,29 +1,17 @@
 from io import BytesIO
-from typing import TYPE_CHECKING
 
-import whisper, os
+import whisper
 import numpy as np
 import sounddevice as sd
 import torch
 from scipy.io.wavfile import write
 from ffmpeg import FFmpeg
 
-from live_whisper_gui.settings import user_settings
+from live_whisper_gui.settings import user_settings, settings
 
 
-# This is my attempt to make psuedo-live transcription of speech using Whisper.
-# Since my system can't use pyaudio, I'm using sounddevice instead.
-# This terminal implementation can run standalone or imported for assistant.py
-# by Nik Stromberg - nikorasu85@gmail.com - MIT 2022 - copilot
-
-Model = 'base'     # Whisper model size (tiny, base, small, medium, large)
-English = True      # Use English-only model?
-Translate = False   # Translate non-English to English?
-SampleRate = 44100  # Stream device recording frequency
-BlockSize = 30      # Block size in milliseconds
-Threshold = 0.01    # Minimum volume threshold to activate listening
-Vocals = [50, 1000] # Frequency range to detect sounds that could be speech
-EndBlocks = 10      # Number of blocks to wait before sending to Whisper
+# Created by Nik Stromberg - nikorasu85@gmail.com - MIT 2022 - copilot
+# Improved and GUI adapted by Suoslex - mtsarev06@gmail.com
 
 
 class LiveWhisper:
@@ -31,21 +19,15 @@ class LiveWhisper:
     _input_device = None
 
     @classmethod
-    def init(cls, model_path: str, assist=None):
-        if assist == None:  # If not being run by my assistant, just run as terminal transcriber.
-            class fakeAsst(): running, talking, analyze = True, False, None
-            cls.asst = fakeAsst()  # anyone know a better way to do this?
-        else: cls.asst = assist
-        cls.running = True
+    def init(cls, model_path: str):
         cls.padding = 0
-        cls.prevblock = cls.buffer = np.zeros((0,1))
-        cls.fileready = False
+        cls.is_buffer_ready = False
         cls.ready_buffer = BytesIO()
-        cls.stop_listen()
+        cls.running = False
         if hasattr(cls, 'model'):
             del cls.model
         cls.model = whisper.load_model(model_path)
-        cls.running = cls.asst.running = True
+        cls.running = True
 
     @classmethod
     def listen(
@@ -54,67 +36,68 @@ class LiveWhisper:
             input_device: str = None
     ):
         cls._qt_thread = qt_thread
-        with sd.InputStream(device=input_device, channels=1, callback=cls._callback, blocksize=int(SampleRate * BlockSize / 1000), samplerate=SampleRate):
-            while cls.running and cls.asst.running: cls._process()
-
-    @classmethod
-    def stop_listen(cls):
-        cls.running = cls.asst.running = False
+        with sd.InputStream(
+                device=input_device,
+                channels=1,
+                callback=cls._callback,
+                blocksize=int(
+                    settings.SAMPLE_RATE * settings.BLOCK_SIZE_MSEC / 1000
+                ),
+                samplerate=settings.SAMPLE_RATE
+        ):
+            while cls.running:
+                cls._process()
 
     @classmethod
     def restart_listening(cls, input_device: str = None):
-        cls.stop_listen()
         cls.listen(qt_thread=cls._qt_thread, input_device=input_device)
 
     @classmethod
     def _callback(cls, indata, frames, time, status):
         if not indata.any():
             return
-        # Original: np.sqrt(np.mean(indata**2)) > Threshold
-        # A few alternative methods exist for detecting speech.. #indata.max() > Threshold
-        #zero_crossing_rate = np.sum(np.abs(np.diff(np.sign(indata)))) / (2 * indata.shape[0]) # threshold 20
-        freq = np.argmax(np.abs(np.fft.rfft(indata[:, 0]))) * SampleRate / frames
-        #print(indata.max())
-        #print(freq)
+        if len(cls.buffer) > settings.MAX_TRANSCRIBE_BUFFER_LENGTH:
+            return cls._save_audio()
+        freq = (
+            np.argmax(np.abs(np.fft.rfft(indata[:, 0])))
+            * settings.SAMPLE_RATE / frames
+        )
         if (
             indata.max() > user_settings.input_device_sensitivity
-            and Vocals[0] <= freq <= Vocals[1]
-            and not cls.asst.talking
+            and freq in settings.VOCAL_RANGE
         ):
             cls._qt_thread.sendMessage('.')
-            if cls.padding < 1: cls.buffer = cls.prevblock.copy()
             cls.buffer = np.concatenate((cls.buffer, indata))
-            cls.padding = EndBlocks
+            cls.padding = settings.SILENT_BLOCKS_TO_SAVE
         else:
             cls.padding -= 1
-            if cls.padding > 1:
-                cls.buffer = np.concatenate((cls.buffer, indata))
-            elif cls.padding < 1 < cls.buffer.shape[0] > SampleRate: # if enough silence has passed, write to file.
-                cls.fileready = True
+            if cls.padding < 1 and cls.buffer.shape[0] > settings.SAMPLE_RATE:
                 cls._save_audio()
-                cls.buffer = np.zeros((0,1))
-            elif cls.padding < 1 < cls.buffer.shape[0] < SampleRate: # if recording not long enough, reset buffer.
-                cls.buffer = np.zeros((0,1))
-                print("\033[2K\033[0G", end='', flush=True)
-            else:
-                cls.prevblock = indata.copy() #np.concatenate((cls.prevblock[-int(SampleRate/10):], indata)) # SLOW
 
     @classmethod
     def _process(cls):
-        if cls.fileready:
-            print("\n\033[90mTranscribing..\033[0m")
+        if cls.is_buffer_ready:
             audio = cls._load_audio()
-            result = cls.model.transcribe(audio=audio,fp16=False,language='en' if English else '',task='translate' if Translate else 'transcribe')
-            print(f"\033[1A\033[2K\033[0G{result['text']}")
+            result = cls.model.transcribe(
+                audio=audio,
+                fp16=False,
+                language='en' if 'en' in user_settings.whisper_model else '',
+                task=(
+                    'translate'
+                    if user_settings.translation_enabled else
+                    'transcribe'
+                )
+            )
             if cls._qt_thread:
                 cls._qt_thread.sendMessage(result['text'])
-            if cls.asst.analyze != None: cls.asst.analyze(result['text'])
-            cls.fileready = False
+            cls.is_buffer_ready = False
 
     @classmethod
     def _save_audio(cls):
+        cls.is_buffer_ready = True
         cls.ready_buffer = BytesIO()
-        write(cls.ready_buffer, SampleRate, cls.buffer)
+        write(cls.ready_buffer, settings.SAMPLE_RATE, cls.buffer)
+        cls.buffer = np.zeros((0, 1))
 
     @classmethod
     def _load_audio(cls):
@@ -131,5 +114,10 @@ class LiveWhisper:
             )
         )
         out = ffmpeg.execute(cls.ready_buffer)
-        return torch.from_numpy(np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0)
+        return torch.from_numpy(
+            np.frombuffer(out, np.int16)
+            .flatten()
+            .astype(np.float32)
+            / 32768.0
+        )
 

@@ -21,8 +21,14 @@ class Settings(BaseModel):
     RESTART_ERROR_CODE: int = 999
     USER_SETTINGS_PATH: Path = WORK_DIR / "settings.json"
     DEFAULT_WHISPER_MODEL: str = "small.en"
+    SAMPLE_RATE: int = 44100
+    BLOCK_SIZE_MSEC: int = 30
+    SILENT_BLOCKS_TO_SAVE: int = 10
+    VOCAL_RANGE = range(50, 1000)
     MIN_INPUT_DEVICE_SENSITIVITY: float = 0.002
     MAX_INPUT_DEVICE_SENSITIVITY: float = 0.2
+    MIN_TRANSCRIBE_BUFFER_LENGTH: int = 50000
+    MAX_TRANSCRIBE_BUFFER_LENGTH: int = 1000000
 
     @computed_field
     @property
@@ -35,13 +41,14 @@ class Settings(BaseModel):
         )
 
 
-
 class UserSettings(BaseModel):
     whisper_model: WhisperModel | None = None
-    window_size: tuple = 320, 450
+    default_input_device: str | None = None
     input_device_sensitivity: float = 0.01
     show_input_selector_on_startup: bool = True
-    default_input_device: str | None = None
+    print_dots_while_listening: bool = True
+    translation_enabled: bool = False
+    window_size: tuple = 320, 450
 
     @classmethod
     def load(cls, user_settings_path: Path):
