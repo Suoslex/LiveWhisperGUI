@@ -65,7 +65,7 @@ class LiveWhisper:
         )
         if (
             indata.max() > user_settings.input_device_sensitivity
-            and freq in settings.VOCAL_RANGE
+            and settings.VOCAL_RANGE[0] <= freq <= settings.VOCAL_RANGE[1]
         ):
             cls._qt_thread.sendMessage('.')
             cls.buffer = np.concatenate((cls.buffer, indata))
