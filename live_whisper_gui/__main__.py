@@ -12,9 +12,9 @@ if __name__ == "__main__":
         ui = MainWindow()
         ui.show()
         return_code = app.exec_()
+        user_settings.window_size = (ui.size().width(), ui.size().height())
+        user_settings.save()
         if return_code == settings.RESTART_ERROR_CODE:
             ui.close()
             continue
-        user_settings.window_size = (ui.size().width(), ui.size().height())
-        user_settings.save()
         sys.exit(return_code)

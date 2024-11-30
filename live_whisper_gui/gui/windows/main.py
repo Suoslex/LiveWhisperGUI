@@ -2,11 +2,10 @@ import re
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from live_whisper_gui.live_whisper.main import LiveWhisper
 from live_whisper_gui.gui.windows.init import (
     InitializeWindow,
     WhisperModelSelectorWindow,
-    AudioDeviceSelector
+    InputDeviceSelector
 )
 from live_whisper_gui.gui.mixins import (
     FramelessWindow,
@@ -23,12 +22,19 @@ class MainWindow(
     MovableFramelessWindow,
     BlackDesignedWindow
 ):
+    """
+    The main window class, containing all the main functionality.
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
-
-        self.resize(*user_settings.window_size)
+        self.initUI()
         self.installEventFilter(self)
+        self.beforeStartup()
+        QtCore.QTimer.singleShot(0, self.afterStartup)
+
+    def initUI(self):
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
+        self.resize(*user_settings.window_size)
 
         self.textEdit = AdvancedTextEdit(self)
         self.textEdit.setPlaceholderText("Listening...")
@@ -36,12 +42,6 @@ class MainWindow(
         layout = QtWidgets.QHBoxLayout(widget)
         layout.addWidget(self.textEdit)
         self.setCentralWidget(widget)
-
-        self.beforeStartup()
-
-        self.toolBarWindow = ToolbarWindow()
-
-        QtCore.QTimer.singleShot(0, self.afterStartup)
 
     def beforeStartup(self):
         self.chooseWhisperModelWindow = WhisperModelSelectorWindow(self)
@@ -58,9 +58,11 @@ class MainWindow(
         )
         self.initializeWindow.exec()
 
-        self.audioDeviceSelectorWindow = AudioDeviceSelector(self)
+        self.audioDeviceSelectorWindow = InputDeviceSelector(self)
         if user_settings.show_input_selector_on_startup:
             self.audioDeviceSelectorWindow.exec()
+
+        self.toolBarWindow = ToolbarWindow()
 
     def afterStartup(self):
         self.whisperThread = LiveWhisperThread(
@@ -138,20 +140,27 @@ class MainWindow(
 
 
 class ToolbarWindow(BlackDesignedWindow):
+    """
+    Small window by the main one with "exit" and "settings" buttons.
+    """
     stopClosing: bool = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setAttribute(QtCore.Qt.WA_Hover)
+        self.initGUI()
         self.installEventFilter(self)
+
+    def initGUI(self):
+        self.setAttribute(QtCore.Qt.WA_Hover)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
-        self.settingsWindow = SettingsWindow()
 
         mainCss = (
-            self.mainCss
-            + "QPushButton {border: 0; font-size: 16pt;  padding: 0px;}"
+                self.mainCss
+                + "QPushButton {border: 0; font-size: 16pt;  padding: 0px;}"
         )
         self.setStyleSheet(mainCss)
+
+        self.settingsWindow = SettingsWindow()
 
         self.closeButton = QtWidgets.QPushButton("✕")
         self.closeButton.clicked.connect(QtWidgets.QApplication.quit)
@@ -180,8 +189,14 @@ class ToolbarWindow(BlackDesignedWindow):
 
 
 class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
+    """
+    Window opened by the "settings" button of the ToolbarWindow.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.initGUI()
+
+    def initGUI(self):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
         self.inputLabelFont = QtGui.QFont()
         self.inputLabelFont.setPointSize(10)
@@ -200,13 +215,13 @@ class SettingsWindow(BlackDesignedWindow, MovableFramelessWindow):
         self.defaultInputDeviceLabel.setFont(self.inputLabelFont)
         self.defaultInputDeviceLabel.setContentsMargins(0, 4, 0, 1)
         self.defaultInputDevice = QtWidgets.QComboBox()
-        self.defaultInputDevice.addItems(AudioDeviceSelector.availableDevises)
+        self.defaultInputDevice.addItems(InputDeviceSelector.availableDevices)
         self.defaultInputDevice.setCurrentText(
             user_settings.default_input_device
         )
 
         self.inputDeviceSensitivitySliderLabel = QtWidgets.QLabel(
-            "Input device sensivity"
+            "Input device sensitivity"
         )
         self.inputDeviceSensitivitySliderLabel.setFont(self.inputLabelFont)
         self.inputDeviceSensitivitySliderLabel.setContentsMargins(0, 4, 0, 1)

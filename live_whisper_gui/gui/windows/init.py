@@ -14,13 +14,26 @@ class InitializeWindow(
     MovableFramelessWindow,
     BlackDesignedWindow
 ):
+    """
+    The first window to appear before start. It loads all necessary files and
+    prepares LiveWhisper for work. Uses InitializationThread to communicate
+    with the backend.
+
+    Attributes
+    ----------
+    whisperModel: str
+        A Whisper model to download and load in RAM.
+    """
     whisperModel: str = None
 
     def __init__(self, *args, whisper_model: str, **kwargs):
-        self.whisperModel = whisper_model
         super().__init__(*args, **kwargs)
-
+        self.initGUI()
+        self.whisperModel = whisper_model
         self.chosenDevice = None
+        QtCore.QTimer.singleShot(10, self.afterWindowShows)
+
+    def initGUI(self):
         self.setFixedSize(270, 270)
         self.setContentsMargins(10, 10, 10, 10)
 
@@ -49,8 +62,6 @@ class InitializeWindow(
         layout.addWidget(self.progressLabel)
         layout.addWidget(self.closeButton)
         self.setLayout(layout)
-
-        QtCore.QTimer.singleShot(10, self.afterWindowShows)
 
     def afterWindowShows(self):
         self.initializeThread = InitializationThread(self, self.whisperModel)
@@ -83,8 +94,14 @@ class SettingsWindow(
     MovableFramelessWindow,
     BlackDesignedWindow
 ):
+    """
+    Base class for a settings window. Usually not initialized by itself.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.initGUI()
+
+    def initGUI(self):
         self.setContentsMargins(8, 8, 8, 8)
         self.setBaseSize(320, 320)
 
@@ -100,8 +117,11 @@ class SettingsWindow(
 
 
 class WhisperModelSelectorWindow(SettingsWindow):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """
+    Settings window with Whisper model options to choose.
+    """
+    def initGUI(self):
+        super().initGUI()
         self.setContentsMargins(8, 8, 8, 8)
         self.label = QtWidgets.QLabel("Choose a Whisper model")
         self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -122,7 +142,6 @@ class WhisperModelSelectorWindow(SettingsWindow):
         layout.addWidget(self.listWidget)
         layout.addWidget(self.chooseButton)
 
-
     def okButtonPressed(self):
         selectedItem = self.listWidget.selectedItems().pop()
         if not selectedItem:
@@ -131,29 +150,31 @@ class WhisperModelSelectorWindow(SettingsWindow):
         self.close()
 
 
-class AudioDeviceSelector(SettingsWindow):
+class InputDeviceSelector(SettingsWindow):
+    """
+    Settings window with available input devices to listen to.
+    """
     chosenDevice: str = None
-    availableDevises = [
+    availableDevices = [
         device['name'] for device in sounddevice.query_devices()
         if device['max_input_channels'] > 0
     ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def initGUI(self):
+        super().initGUI()
         self.label = QtWidgets.QLabel("Please choose an input device:")
         self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         self.listWidget = QtWidgets.QListWidget()
         self.listWidget.setStyleSheet("padding-top: 10px; font-size: 11pt")
-        self.listWidget.addItems(self.availableDevises)
+        self.listWidget.addItems(self.availableDevices)
         self.listWidget.itemClicked.connect(
             lambda: self.chooseButton.setEnabled(True)
         )
         self.chooseButton.setDisabled(True)
         if user_settings.default_input_device:
             try:
-                row_index = self.availableDevises.index(
+                row_index = self.availableDevices.index(
                     user_settings.default_input_device
                 )
             except ValueError:
@@ -169,9 +190,11 @@ class AudioDeviceSelector(SettingsWindow):
         layout = self.layout()
         layout.addWidget(self.label)
         layout.addWidget(self.listWidget)
-        layout.addWidget(self.checkbox, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(
+            self.checkbox,
+            alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
         layout.addWidget(self.chooseButton)
-
 
     def okButtonPressed(self):
         selectedItem = self.listWidget.selectedItems().pop()
