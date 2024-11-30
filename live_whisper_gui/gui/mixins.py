@@ -2,6 +2,10 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 class FramelessWindow(QtWidgets.QWidget):
+    """
+    Makes a window frameless and resizable.
+    Also enables moving the window to center of the screen.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
@@ -36,6 +40,9 @@ class FramelessWindow(QtWidgets.QWidget):
 
 
 class MovableFramelessWindow(FramelessWindow):
+    """
+    Makes a window movable by dragging it at any place.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._draggingMousePos = None
@@ -55,6 +62,10 @@ class MovableFramelessWindow(FramelessWindow):
 
 
 class BlackDesignedWindow(QtWidgets.QWidget):
+    """
+    Makes a window black-styled with transparent effect.
+    """
+
     mainCss: str = """
         QWidget {background-color: black; color: white; text-align: center;}
         QPushButton {border: 1px solid white; padding: 2px 10px;}
