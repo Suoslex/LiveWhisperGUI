@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from io import BytesIO
 
 import whisper
@@ -14,12 +16,33 @@ from live_whisper_gui.settings import user_settings, settings
 # Improved and GUI adapted by Suoslex - mtsarev06@gmail.com
 
 
+if TYPE_CHECKING:
+    from live_whisper_gui.gui.threads import LiveWhisperThread
+
+
 class LiveWhisper:
-    _qt_thread = None
-    _input_device = None
+    """
+    Main class with crucial LiveWhisper functionality.
+    It initializes downloaded Wisper model and enables listening
+    of an input device.
+
+    Attributes
+    ----------
+    _qt_thread: QtCore.QThread
+        Associated thread to communicate with the GUI.
+    """
+    _qt_thread: LiveWhisperThread = None
 
     @classmethod
     def init(cls, model_path: str):
+        """
+        Prepares all variables for listening and loads a Whisper model to RAM.
+
+        Parameters
+        ----------
+        model_path: str
+            Local path to a downloaded whisper model.
+        """
         cls.padding = 0
         cls.is_buffer_ready = False
         cls.buffer = np.zeros((0, 1))
@@ -33,9 +56,25 @@ class LiveWhisper:
     @classmethod
     def listen(
             cls,
-            qt_thread=None,
+            qt_thread: LiveWhisperThread = None,
             input_device: str = None
     ):
+        """
+        Starts listening of an input device and processes all incoming sounds.
+        It includes preparing data and sending it to Whisper.
+
+        Parameters
+        ----------
+        qt_thread: LiveWhisperThread
+            Associated thread to communicate with the GUI.
+        input_device: str
+            Name of an input device to listen to.
+        """
+        if not cls.model:
+            raise EnvironmentError(
+                "Please use LiveWhisper.init() method "
+                "before starting the listening."
+            )
         cls._qt_thread = qt_thread
         with sd.InputStream(
                 device=input_device,
@@ -50,11 +89,10 @@ class LiveWhisper:
                 cls._process()
 
     @classmethod
-    def restart_listening(cls, input_device: str = None):
-        cls.listen(qt_thread=cls._qt_thread, input_device=input_device)
-
-    @classmethod
     def _callback(cls, indata, frames, time, status):
+        """
+        Function used by SoundDevice to communicate with the LiveWhisper.
+        """
         if not indata.any():
             return
         if len(cls.buffer) > settings.MAX_TRANSCRIBE_BUFFER_LENGTH:
@@ -77,6 +115,9 @@ class LiveWhisper:
 
     @classmethod
     def _process(cls):
+        """
+        Processes prepared data by sending it to Whisper.
+        """
         if cls.is_buffer_ready:
             audio = cls._load_audio()
             result = cls.model.transcribe(
@@ -95,6 +136,10 @@ class LiveWhisper:
 
     @classmethod
     def _save_audio(cls):
+        """
+        Saves collected sound data and sends it to
+        _process method by filling the ready_buffer.
+        """
         cls.ready_buffer = BytesIO()
         write(cls.ready_buffer, settings.SAMPLE_RATE, cls.buffer)
         cls.buffer = np.zeros((0, 1))
@@ -102,6 +147,10 @@ class LiveWhisper:
 
     @classmethod
     def _load_audio(cls):
+        """
+        Loads a collected audio from ready_buffer and prepares it
+        for processing by Whisper.
+        """
         ffmpeg = (
             FFmpeg()
             .option("y")

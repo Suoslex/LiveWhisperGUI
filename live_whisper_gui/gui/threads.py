@@ -1,7 +1,3 @@
-import os
-from abc import ABCMeta
-from typing import Callable, Any
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from live_whisper_gui.live_whisper.main import LiveWhisper

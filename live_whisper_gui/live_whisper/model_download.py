@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import hashlib
 import warnings
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from live_whisper_gui.gui.windows.init import InitializeWindow
 
 
-def model_download(qt_thread: "InitializeWindow", name: str) -> str:
+def model_download(qt_thread: InitializeWindow, name: str) -> str:
     if name not in _MODELS:
         raise EnvironmentError(f"There is no Whisper model called {name}")
     url = _MODELS[name]
