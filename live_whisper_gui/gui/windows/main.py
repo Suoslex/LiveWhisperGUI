@@ -31,7 +31,6 @@ class MainWindow(
         self.installEventFilter(self)
 
         self.textEdit = AdvancedTextEdit(self)
-        self.textEdit.setDisabled(True)
         self.textEdit.setPlaceholderText("Listening...")
         widget = FramelessWindow()
         layout = QtWidgets.QHBoxLayout(widget)
