@@ -11,10 +11,20 @@ from live_whisper_gui.settings import settings
 
 
 if TYPE_CHECKING:
-    from live_whisper_gui.gui.windows.init import InitializeWindow
+    from live_whisper_gui.gui.threads import InitializationThread
 
 
-def model_download(qt_thread: InitializeWindow, name: str) -> str:
+def model_download(qt_thread: InitializationThread, name: str) -> str:
+    """
+    Downloads a Whisper model to a cache dir.
+
+    Parameters
+    ----------
+    qt_thread: InitializationThread
+        Associated thread to communicate with the GUI.
+    name: str
+        Name of a Whisper model to download.
+    """
     if name not in _MODELS:
         raise EnvironmentError(f"There is no Whisper model called {name}")
     url = _MODELS[name]
