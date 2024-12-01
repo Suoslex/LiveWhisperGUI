@@ -42,6 +42,7 @@ class MainWindow(
         layout = QtWidgets.QHBoxLayout(widget)
         layout.addWidget(self.textEdit)
         self.setCentralWidget(widget)
+        self.toolBarWindow = ToolbarWindow()
 
     def beforeStartup(self):
         self.chooseWhisperModelWindow = WhisperModelSelectorWindow(self)
@@ -62,7 +63,6 @@ class MainWindow(
         if user_settings.show_input_selector_on_startup:
             self.audioDeviceSelectorWindow.exec()
 
-        self.toolBarWindow = ToolbarWindow()
 
     def afterStartup(self):
         self.whisperThread = LiveWhisperThread(
