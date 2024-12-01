@@ -1,5 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
+from live_whisper_gui.settings import settings
+
 
 class FramelessWindow(QtWidgets.QWidget):
     """
@@ -65,13 +67,21 @@ class BlackDesignedWindow(QtWidgets.QWidget):
     """
     Makes a window black-styled with transparent effect.
     """
-
+        #Trebuchet MS
     mainCss: str = """
-        QWidget {background-color: black; color: white; text-align: center;}
+        QWidget {
+            background-color: black; 
+            color: white; 
+            text-align: center;
+            font-family: 'Segoe UI Historic';
+        }
+        QListWidget {padding-top: 10px; font-size: 15px}
+        QListWidget::item {font-size: 8px;}
+        QListWidget::item:selected {background-color: #FAF9F6;color: black;}
+        QLabel {font-weight: bold;}
         QPushButton {border: 1px solid white; padding: 2px 10px;}
         QPushButton::disabled {border: 1px solid grey;}
         QComboBox {border: 1px solid white; padding: 4px}
-
         QComboBox::drop-down {
             subcontrol-origin: padding;
             subcontrol-position: top right;

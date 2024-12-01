@@ -166,7 +166,6 @@ class InputDeviceSelector(SettingsWindow):
         self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         self.listWidget = QtWidgets.QListWidget()
-        self.listWidget.setStyleSheet("padding-top: 10px; font-size: 11pt")
         self.listWidget.addItems(self.availableDevices)
         self.listWidget.itemClicked.connect(
             lambda: self.chooseButton.setEnabled(True)
