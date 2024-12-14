@@ -155,8 +155,8 @@ class ToolbarWindow(BlackDesignedWindow):
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint, True)
 
         mainCss = (
-                self.mainCss
-                + "QPushButton {border: 0; font-size: 16pt;  padding: 0px;}"
+            self.mainCss
+            + "QPushButton {border: 0; font-size: 16px;  padding: 0px;}"
         )
         self.setStyleSheet(mainCss)
 

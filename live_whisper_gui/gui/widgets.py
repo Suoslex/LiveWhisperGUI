@@ -11,7 +11,10 @@ class AdvancedTextEdit(QtWidgets.QTextEdit):
 
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.setContentsMargins(0, 30, 0, 0)
-        self.setStyleSheet("QScrollBar:vertical { width: 5px;}")
+        self.setStyleSheet(
+            "QTextEdit {border: 0px;font-size:16px;} "
+            "QScrollBar:vertical {width: 5px;}"
+        )
         self.setReadOnly(True)
         self.setDisabled(True)
 
