@@ -74,9 +74,9 @@ class BlackDesignedWindow(QtWidgets.QWidget):
             color: white; 
             text-align: center;
             font-family: 'Segoe UI Historic';
-            font-size: 14px;
+            font-size: 12px;
         }
-        QListWidget {padding-top: 10px; font-size: 15px}
+        QListWidget {padding-top: 10px; font-size: 13px}
         QListWidget::item {font-size: 8px;}
         QListWidget::item:selected {background-color: #FAF9F6;color: black;}
         QLabel {font-weight: bold;}

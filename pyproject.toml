@@ -10,12 +10,15 @@ readme = "README.md"
 python = "^3.11"
 llvmlite = "^0.43.0"
 numba = "^0.60.0"
-openai-whisper = {git = "https://github.com/openai/whisper.git"}
+openai-whisper = {git = "https://github.com/openai/whisper.git", rev = "v20240930"}
 scipy = "^1.14.1"
 sounddevice = "^0.5.1"
 pydantic = "^2.10.1"
 pyqt5 = "5.15.11"
-PyQt5-Qt5 = "5.15.2"
+PyQt5-Qt5 = [
+    {version = "5.15.2", markers = "sys_platform == 'win32'"},
+    {version = "5.15.11", markers = "sys_platform == 'darwin' or sys_platform == 'linux'"}
+]
 python-ffmpeg = "^2.0.12"
 
 
