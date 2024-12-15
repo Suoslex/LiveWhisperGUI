@@ -46,6 +46,7 @@ class LiveWhisper:
         cls.padding = 0
         cls.is_buffer_ready = False
         cls.buffer = np.zeros((0, 1))
+        cls.prev_block = cls.buffer.copy()
         cls.ready_buffer = BytesIO()
         cls.running = False
         if hasattr(cls, 'model'):
@@ -106,12 +107,18 @@ class LiveWhisper:
             and settings.VOCAL_RANGE[0] <= freq <= settings.VOCAL_RANGE[1]
         ):
             cls._qt_thread.sendMessage('.')
+            if cls.padding < 1:
+                cls.buffer = cls.prev_block.copy()
             cls.buffer = np.concatenate((cls.buffer, indata))
             cls.padding = settings.SILENT_BLOCKS_TO_SAVE
         else:
             cls.padding -= 1
-            if cls.padding < 1 and cls.buffer.shape[0] > settings.SAMPLE_RATE:
+            if cls.padding > 1:
+                cls.buffer = np.concatenate((cls.buffer, indata))
+            elif cls.buffer.shape[0] > settings.SAMPLE_RATE:
                 cls._save_audio()
+            else:
+                cls.prev_block = indata.copy()
 
     @classmethod
     def _process(cls):
